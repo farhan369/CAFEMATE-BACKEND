@@ -1,9 +1,12 @@
+import { config } from "dotenv";
+config();
 import User from "../model/user.js";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 
-export const userController = {
-    async createUser(req, res) {
+export const createUser = 
+    async (req, res) => {
       try {
         const { name, email, phoneNumber, password, isManager } = req.body;
   
@@ -31,8 +34,32 @@ export const userController = {
         console.error(error);
         return res.status(500).json({ message: "Internal server error" });
       }
-    },
-  };
+    };
+ 
+    export const login = async (req, res) => {
+        const { email, password } = req.body;
+      
+        try {
+          const user = await User.findOne({ email });
+      
+          if (!user) {
+            return res.status(404).json({ error: "User not found" });
+          }
+      
+          const isMatch = await bcrypt.compare(password, user.password);
+      
+          if (!isMatch) {
+            return res.status(401).json({ error: "Invalid credentials" });
+          }
+      
+          const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
+      
+          res.json({ token });
+        } catch (error) {
+          console.error(error);
+          res.status(500).json({ error: "Server error" });
+        }
+      };
   
 
   
